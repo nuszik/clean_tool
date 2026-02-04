@@ -65,11 +65,11 @@ elif len(st.session_state.history) == 0:
     
     st.divider()
     if "Outcome" in cat:
-        st.success("✅ **Outcome:** Model this! Ask: *'And is there anything else about [Outcome]?'*")
+        st.success("✅ **Outcome:** Model this! Ask: 'And is there anything else about [Outcome]?'")
     elif "Problem" in cat:
-        st.error("⚠️ **Problem:** Do NOT model this. Transition to: *'What would you like to have happen?'*")
+        st.error("⚠️ **Problem:** Do NOT model this. Transition to: 'What would you like to have happen?'")
     else:
-        st.warning("🔄 **Remedy:** This is a fix. Ask: *'And when [Remedy], then what happens?'*")
+        st.warning("🔄 **Remedy:** This is a fix. Ask: 'And when [Remedy], then what happens?'")
     
     if st.button("Start Modeling"):
         st.session_state.history.append({"question": "Initial", "answer": st.session_state.desired_outcome, "pro_type": cat})
@@ -82,9 +82,44 @@ else:
         st.subheader("Question Builder")
         subject_x = st.text_input("Metaphor/Word (X):")
         
-        # FIXED QUESTION DICTIONARY
+        # --- FIXED DICTIONARY BLOCK ---
         questions = {
             "Developing (Outcomes)": [
                 "And is there anything else about [X]?",
                 "And what kind of [X] is that [X]?",
                 "And whereabouts is [X]?",
+                "And does [X] have a size or a shape?"
+            ],
+            "Transitioning (Problems)": [
+                "And when [X], what would you like to have happen?",
+                "And what needs to happen for [Pinned Outcome]?",
+                "And can [Pinned Outcome] happen?"
+            ],
+            "Moving Time (Remedies)": [
+                "And when [X], then what happens?",
+                "And what happens just before [X]?"
+            ]
+        }
+        
+        stage = st.selectbox("Stage:", list(questions.keys()))
+        
+        # HELPER TEXT
+        if stage == "Developing (Outcomes)":
+            st.help("Build the landscape. Only develop Outcome words.")
+        elif stage == "Transitioning (Problems)":
+            st.help("Bridge back to the goal from a Problem.")
+        elif stage == "Moving Time (Remedies)":
+            st.help("Discover what happens next after a Remedy.")
+
+        selected_q = st.selectbox("Question:", questions[stage])
+        final_q = selected_q.replace("[X]", f"'{subject_x}'").replace("[Pinned Outcome]", f"'{st.session_state.desired_outcome}'")
+
+    with col2:
+        st.subheader("Log Response")
+        st.markdown(f"**ASK:** `{final_q}`")
+        client_response = st.text_area("Client Response:")
+        pro_type = st.radio("Category:", ["Outcome", "Problem", "Remedy"], horizontal=True)
+        if st.button("Log Entry"):
+            if client_response:
+                st.session_state.history.append({"question": final_q, "answer": client_response, "pro_type": pro_type})
+                st.rerun()
