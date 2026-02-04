@@ -82,7 +82,9 @@ else:
         st.subheader("Question Builder")
         subject_x = st.text_input("Metaphor/Word (X):")
         
+        # FIXED QUESTION DICTIONARY
         questions = {
             "Developing (Outcomes)": [
                 "And is there anything else about [X]?",
-                "And what kind of [X] is
+                "And what kind of [X] is that [X]?",
+                "And whereabouts is [X]?",
