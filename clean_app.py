@@ -10,7 +10,7 @@ if 'history' not in st.session_state:
 if 'desired_outcome' not in st.session_state:
     st.session_state.desired_outcome = ""
 
-# --- SIDEBAR: PINNED OUTCOME & HISTORY ---
+# --- SIDEBAR: PINNED OUTCOME, HISTORY & DOWNLOAD ---
 with st.sidebar:
     st.title("🎯 Pinned Outcome")
     if st.session_state.desired_outcome:
@@ -21,8 +21,30 @@ with st.sidebar:
             st.rerun()
     
     st.divider()
+    
+    # DOWNLOAD LOGIC
     if st.session_state.history:
-        st.header("📝 Session History")
+        st.header("📥 Export Session")
+        
+        # Format the transcript text
+        transcript = f"CLEAN LANGUAGE SESSION - {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+        transcript += f"PINNED OUTCOME: {st.session_state.desired_outcome}\n"
+        transcript += "="*40 + "\n\n"
+        
+        for i, item in enumerate(st.session_state.history):
+            transcript += f"{i+1}. [{item['pro_type']}]\n"
+            transcript += f"   Q: {item['question']}\n"
+            transcript += f"   A: {item['answer']}\n\n"
+        
+        st.download_button(
+            label="Download .txt Transcript",
+            data=transcript,
+            file_name=f"clean_session_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+            mime="text/plain"
+        )
+        
+        st.divider()
+        st.header("📝 History")
         for item in reversed(st.session_state.history):
             st.caption(f"{item['pro_type']}")
             st.write(f"**Q:** {item['question']}")
@@ -71,7 +93,6 @@ else:
         subject_x = st.text_input("Metaphor/Word (X):")
         subject_y = st.text_input("Reference Word (Y) - Optional:")
         
-        # DEFINED QUESTION DICTIONARY
         questions = {
             "Developing (Outcomes)": [
                 "And is there anything else about [X]?",
@@ -80,51 +101,4 @@ else:
                 "And does [X] have a size or a shape?"
             ],
             "Relationship (Space)": [
-                "And is there a relationship between [X] and [Y]?",
-                "And when [X], what happens to [Y]?",
-                "And whereabouts is [X] in relation to [Y]?"
-            ],
-            "Transitioning (Problems)": [
-                "And when [X], what would you like to have happen?",
-                "And what needs to happen for [Pinned Outcome]?",
-                "And can [Pinned Outcome] happen?"
-            ],
-            "Moving Time (Remedies)": [
-                "And when [X], then what happens?",
-                "And what happens just before [X]?"
-            ]
-        }
-        
-        stage = st.selectbox("Select Category:", list(questions.keys()))
-        
-        # --- FIXED HELPER TEXT (Using st.info instead of st.help) ---
-        if "Developing" in stage:
-            st.info("Focus on Outcome metaphors to build the internal landscape.")
-        elif "Relationship" in stage:
-            st.info("Explore how different parts of the client's model interact.")
-        elif "Transitioning" in stage:
-            st.info("Bridges the gap from a Problem back to the Pinned Outcome.")
-        elif "Moving" in stage:
-            st.info("Moves the sequence forward to find the actual benefit of a Remedy.")
-
-        selected_q = st.selectbox("Choose Question:", questions[stage])
-        
-        # String Replacement Logic
-        final_q = selected_q.replace("[X]", f"'{subject_x}'")
-        final_q = final_q.replace("[Y]", f"'{subject_y}'")
-        final_q = final_q.replace("[Pinned Outcome]", f"'{st.session_state.desired_outcome}'")
-
-    with col2:
-        st.subheader("Log Response")
-        st.markdown(f"**ASK:** `{final_q}`")
-        client_response = st.text_area("Client Response:", height=150)
-        pro_type = st.radio("Categorize Response:", ["Outcome", "Problem", "Remedy"], horizontal=True)
-        
-        if st.button("Log and Continue"):
-            if client_response:
-                st.session_state.history.append({
-                    "question": final_q, 
-                    "answer": client_response, 
-                    "pro_type": pro_type
-                })
-                st.rerun()
+                "And is there a relationship between
