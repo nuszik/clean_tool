@@ -4,13 +4,22 @@ from datetime import datetime
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Clean Language Facilitator PRO", layout="wide")
 
-# --- CUSTOM CSS FOR COMPACT BUTTONS ---
+# --- REFINED CSS FOR MINI-BUTTONS ---
 st.markdown("""
     <style>
-    div.stButton > button {
-        font-size: 12px !important;
-        padding: 2px 10px !important;
-        height: auto !important;
+    /* Targeted styling for the sensory attribute buttons */
+    div[data-testid="column"] button {
+        font-size: 10px !important;
+        padding: 1px 5px !important;
+        min-height: 25px !important;
+        height: 25px !important;
+        line-height: 1 !important;
+        border-radius: 4px !important;
+    }
+    /* Ensure text inside button doesn't wrap awkwardly */
+    div[data-testid="column"] button p {
+        font-size: 10px !important;
+        margin: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -79,7 +88,7 @@ elif len(st.session_state.history) == 0:
         st.rerun()
 
 else:
-    tab1, tab2, tab3 = st.tabs(["🚀 Active Session", "🖼️ Symbolic Landscape", "📚 The Clean 12 Reference"])
+    tab1, tab2, tab3 = st.tabs(["🚀 Active Session", "🖼️ Symbolic Landscape", "📚 Reference: Clean 12 & PRO"])
 
     with tab1:
         col1, col2 = st.columns([1, 1], gap="large")
@@ -88,7 +97,7 @@ else:
             subject_x = st.text_input("Metaphor/Word (X):")
             subject_y = st.text_input("Reference Word (Y):")
             
-            st.write("**Quick Sensory Attributes (Smaller):**")
+            st.write("**Quick Sensory Attributes:**")
             q_cols = st.columns(4)
             if q_cols[0].button("📍 Location"): st.session_state.active_q = "And whereabouts is [X]?"
             if q_cols[1].button("📏 Size/Shape"): st.session_state.active_q = "And does [X] have a size or a shape?"
@@ -147,9 +156,8 @@ else:
             st.write(f"**Q:** {item['question']}"); st.write(f"**A:** {item['answer']}"); st.divider()
 
     with tab3:
-        st.header("The 12 Basic Clean Language Questions")
-        st.caption("Developed by Penny Tompkins & James Lawley (Symbolic Modelling)")
-        
+        st.header("The Clean 12 Questions")
+        st.caption("Developed by Penny Tompkins & James Lawley")
         c1, c2 = st.columns(2)
         with c1:
             st.subheader("Developing Questions")
@@ -171,4 +179,21 @@ else:
             * **Necessary Conditions:** And what needs to happen for [X] to [Y]?
             * **Necessary Conditions:** And can [X] [Y]?
             """)
-        st.info("💡 **Clean Stance:** Remember to stay curious, maintain the client's exact words, and avoid adding your own metaphors.")
+        
+        st.divider()
+        st.header("The PRO Model Logic")
+        st.caption("Strategic Navigation for Facilitators")
+        
+        p1, p2, p3 = st.columns(3)
+        with p1:
+            st.error("**P - Problem**")
+            st.write("Description of what is wrong or unwanted.")
+            st.info("**Action:** Acknowledge & Transition. Ask: 'And what would you like to have happen?'")
+        with p2:
+            st.warning("**R - Remedy**")
+            st.write("A 'fix' or conceptual solution (e.g., 'I need to be confident').")
+            st.info("**Action:** Move time forward. Ask: 'And when [Remedy], then what happens?'")
+        with p3:
+            st.success("**O - Outcome**")
+            st.write("A desired state or metaphoric description of the goal.")
+            st.info("**Action:** Develop! Use the 12 questions to model the landscape.")
