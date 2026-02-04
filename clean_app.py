@@ -22,11 +22,9 @@ with st.sidebar:
     
     st.divider()
     
-    # DOWNLOAD LOGIC
     if st.session_state.history:
         st.header("📥 Export Session")
         
-        # Format the transcript text
         transcript = f"CLEAN LANGUAGE SESSION - {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
         transcript += f"PINNED OUTCOME: {st.session_state.desired_outcome}\n"
         transcript += "="*40 + "\n\n"
@@ -58,7 +56,6 @@ with st.sidebar:
 # --- MAIN INTERFACE ---
 st.title("Clean Language Facilitator")
 
-# STAGE 1: THE OPENING
 if not st.session_state.desired_outcome:
     st.subheader("1. The Opening")
     st.info("Ask: 'And what would you like to have happen?'")
@@ -67,7 +64,6 @@ if not st.session_state.desired_outcome:
         st.session_state.desired_outcome = initial_input
         st.rerun()
 
-# STAGE 2: THE PRO BRIDGE
 elif len(st.session_state.history) == 0:
     st.subheader("2. Categorize the Response")
     st.write(f"The client said: **\"{st.session_state.desired_outcome}\"**")
@@ -85,7 +81,6 @@ elif len(st.session_state.history) == 0:
         st.session_state.history.append({"question": "Initial", "answer": st.session_state.desired_outcome, "pro_type": cat})
         st.rerun()
 
-# STAGE 3: THE ENGINE
 else:
     col1, col2 = st.columns([1, 1])
     with col1:
@@ -93,6 +88,7 @@ else:
         subject_x = st.text_input("Metaphor/Word (X):")
         subject_y = st.text_input("Reference Word (Y) - Optional:")
         
+        # --- FIXED DICTIONARY BLOCK (No line breaks within quotes) ---
         questions = {
             "Developing (Outcomes)": [
                 "And is there anything else about [X]?",
@@ -101,4 +97,49 @@ else:
                 "And does [X] have a size or a shape?"
             ],
             "Relationship (Space)": [
-                "And is there a relationship between
+                "And is there a relationship between [X] and [Y]?",
+                "And when [X], what happens to [Y]?",
+                "And whereabouts is [X] in relation to [Y]?"
+            ],
+            "Transitioning (Problems)": [
+                "And when [X], what would you like to have happen?",
+                "And what needs to happen for [Pinned Outcome]?",
+                "And can [Pinned Outcome] happen?"
+            ],
+            "Moving Time (Remedies)": [
+                "And when [X], then what happens?",
+                "And what happens just before [X]?"
+            ]
+        }
+        
+        stage = st.selectbox("Select Category:", list(questions.keys()))
+        
+        if "Developing" in stage:
+            st.info("Focus on Outcome metaphors to build the internal landscape.")
+        elif "Relationship" in stage:
+            st.info("Explore how different parts of the client's model interact.")
+        elif "Transitioning" in stage:
+            st.info("Bridges the gap from a Problem back to the Pinned Outcome.")
+        elif "Moving" in stage:
+            st.info("Moves the sequence forward to find the actual benefit of a Remedy.")
+
+        selected_q = st.selectbox("Choose Question:", questions[stage])
+        
+        final_q = selected_q.replace("[X]", f"'{subject_x}'")
+        final_q = final_q.replace("[Y]", f"'{subject_y}'")
+        final_q = final_q.replace("[Pinned Outcome]", f"'{st.session_state.desired_outcome}'")
+
+    with col2:
+        st.subheader("Log Response")
+        st.markdown(f"**ASK:** `{final_q}`")
+        client_response = st.text_area("Client Response:", height=150)
+        pro_type = st.radio("Categorize Response:", ["Outcome", "Problem", "Remedy"], horizontal=True)
+        
+        if st.button("Log and Continue"):
+            if client_response:
+                st.session_state.history.append({
+                    "question": final_q, 
+                    "answer": client_response, 
+                    "pro_type": pro_type
+                })
+                st.rerun()
