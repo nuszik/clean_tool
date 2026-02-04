@@ -4,20 +4,22 @@ from datetime import datetime
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Clean Language Facilitator PRO", layout="wide")
 
-# --- CSS FOR MINI-BUTTONS ---
+# --- AGGRESSIVE CSS FOR MINI-BUTTONS ---
+# Using highly specific selectors to force the 10px font size
 st.markdown("""
     <style>
-    div[data-testid="column"] button {
+    /* Target the text inside the specific sensory attribute buttons */
+    button[kind="secondary"] div[data-testid="stMarkdownContainer"] p {
         font-size: 10px !important;
-        padding: 1px 5px !important;
-        min-height: 25px !important;
-        height: 25px !important;
-        line-height: 1 !important;
-        border-radius: 4px !important;
+        font-weight: 600 !important;
+        line-height: 1.2 !important;
     }
-    div[data-testid="column"] button p {
-        font-size: 10px !important;
-        margin: 0 !important;
+    /* Target the button container itself */
+    button[kind="secondary"] {
+        padding: 0px 5px !important;
+        height: 24px !important;
+        min-height: 24px !important;
+        border-radius: 4px !important;
     }
     .ask-box {
         border-radius: 10px;
