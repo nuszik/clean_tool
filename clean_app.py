@@ -159,4 +159,16 @@ else:
             * **Location:** And whereabouts is [X]?
             * **Metaphor:** And that [X] is like what?
             * **Relationship:** And is there a relationship between [X] and [Y]?
-            * **Relationship:** And whereabouts is [X] in relation to
+            * **Relationship:** And whereabouts is [X] in relation to [Y]?
+            """)
+        with c2:
+            st.subheader("Moving Time & Space")
+            st.markdown("""
+            * **Sequence:** And what happens just before [X]?
+            * **Sequence:** And then what happens? / And what happens next?
+            * **Source:** And where could that [X] come from?
+            * **Intention:** And what does [X] want to have happen?
+            * **Necessary Conditions:** And what needs to happen for [X] to [Y]?
+            * **Necessary Conditions:** And can [X] [Y]?
+            """)
+        st.info("💡 **Clean Stance:** Remember to stay curious, maintain the client's exact words, and avoid adding your own metaphors.")
