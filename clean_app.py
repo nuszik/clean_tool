@@ -74,15 +74,14 @@ else:
             subject_x = st.text_input("Metaphor/Word (X):")
             subject_y = st.text_input("Reference Word (Y):")
             
-            # --- 2. INTELLIGENT STAGING (LOGIC) ---
-            # Check if Relationship question has been asked in the last 5 logs
+            # --- INTELLIGENT STAGING ---
             last_5 = st.session_state.history[-5:]
             rel_asked = any("relationship" in item['question'].lower() or "relation" in item['question'].lower() for item in last_5)
             
             if not rel_asked and len(st.session_state.history) >= 5:
-                st.info("💡 **Tip:** You've been developing X for a while. Consider a 'Relationship' question to link the landscape.")
+                st.info("💡 **Tip:** Consider a 'Relationship' question to link the landscape.")
 
-            # --- 3. QUICK ATTRIBUTES BAR ---
+            # --- QUICK ATTRIBUTES BAR ---
             st.write("**Quick Sensory Attributes:**")
             q_cols = st.columns(4)
             if q_cols[0].button("📍 Location"): st.session_state.active_q = "And whereabouts is [X]?"
@@ -115,11 +114,8 @@ else:
             }
             
             stage = st.selectbox("Category:", list(questions.keys()))
-            
-            # Use selectbox but allow override by Quick Buttons
             current_options = questions[stage]
             if st.session_state.active_q not in current_options and "[X]" in st.session_state.active_q:
-                # Add the override question to the top of the list temporarily if not there
                 current_options = [st.session_state.active_q] + current_options
             
             selected_q = st.selectbox("Question:", current_options, index=0)
@@ -128,15 +124,15 @@ else:
         with col2:
             st.subheader("Log Response")
             
-            # --- SEMANTIC HIGHLIGHT (Outline Color) ---
-            border_color = "#2196F3" # Default Blue (Outcome)
-            if "Transitioning" in stage: border_color = "#F44336" # Red (Problem)
-            if "Moving" in stage: border_color = "#FF9800" # Orange (Remedy)
+            # --- FIXED BACKGROUND (Standard Input Look) ---
+            border_color = "#2196F3" 
+            if "Transitioning" in stage: border_color = "#F44336"
+            if "Moving" in stage: border_color = "#FF9800"
             
             st.markdown(f"""
-                <div style="border: 3px solid {border_color}; padding:15px; border-radius:10px; background-color: #ffffff;">
+                <div style="border: 2px solid {border_color}; padding:15px; border-radius:10px; background-color: #f0f2f6; color: #31333F;">
                 <strong style="color:{border_color};">ASK:</strong><br>
-                <span style="font-size: 1.1em; font-family: monospace;">{final_q}</span>
+                <span style="font-size: 1.15em; font-family: 'Source Sans Pro', sans-serif; font-weight: 500;">{final_q}</span>
                 </div>
                 """, unsafe_allow_html=True)
             
@@ -163,11 +159,9 @@ else:
     with tab2:
         st.subheader("The Symbolic Landscape")
         metaphors = [item for item in st.session_state.history if item.get('is_metaphor')]
-        
         if not metaphors:
             st.info("Tag a response as 'Yes' for 'Is Metaphor?' to see it here.")
         else:
-            # Display summary grid of metaphors
             m_cols = st.columns(3)
             for i, item in enumerate(metaphors):
                 with m_cols[i % 3]:
