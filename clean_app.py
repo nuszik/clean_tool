@@ -30,7 +30,8 @@ with st.sidebar:
         transcript += "="*40 + "\n\n"
         
         for i, item in enumerate(st.session_state.history):
-            transcript += f"{i+1}. [{item['pro_type']}]\n"
+            metaphor_tag = " [SYMBOL]" if item.get('is_metaphor') else ""
+            transcript += f"{i+1}. [{item['pro_type']}] {metaphor_tag}\n"
             transcript += f"   Q: {item['question']}\n"
             transcript += f"   A: {item['answer']}\n\n"
         
@@ -44,7 +45,8 @@ with st.sidebar:
         st.divider()
         st.header("📝 History")
         for item in reversed(st.session_state.history):
-            st.caption(f"{item['pro_type']}")
+            tag_style = "🔮 Metaphor" if item.get('is_metaphor') else "💬 Concept"
+            st.caption(f"{item['pro_type']} | {tag_style}")
             st.write(f"**Q:** {item['question']}")
             st.write(f"**A:** {item['answer']}")
             st.divider()
@@ -78,7 +80,12 @@ elif len(st.session_state.history) == 0:
         st.warning("🔄 **Action:** This is a fix. Ask: 'And when [Remedy], then what happens?'")
     
     if st.button("Start Modeling"):
-        st.session_state.history.append({"question": "Initial", "answer": st.session_state.desired_outcome, "pro_type": cat})
+        st.session_state.history.append({
+            "question": "Initial", 
+            "answer": st.session_state.desired_outcome, 
+            "pro_type": cat,
+            "is_metaphor": False
+        })
         st.rerun()
 
 else:
@@ -88,7 +95,6 @@ else:
         subject_x = st.text_input("Metaphor/Word (X):")
         subject_y = st.text_input("Reference Word (Y) - Optional:")
         
-        # --- FIXED DICTIONARY BLOCK (No line breaks within quotes) ---
         questions = {
             "Developing (Outcomes)": [
                 "And is there anything else about [X]?",
@@ -133,13 +139,19 @@ else:
         st.subheader("Log Response")
         st.markdown(f"**ASK:** `{final_q}`")
         client_response = st.text_area("Client Response:", height=150)
-        pro_type = st.radio("Categorize Response:", ["Outcome", "Problem", "Remedy"], horizontal=True)
+        
+        pro_col, meta_col = st.columns([2, 1])
+        with pro_col:
+            pro_type = st.radio("Type:", ["Outcome", "Problem", "Remedy"], horizontal=True)
+        with meta_col:
+            is_metaphor = st.checkbox("🔮 Metaphor?")
         
         if st.button("Log and Continue"):
             if client_response:
                 st.session_state.history.append({
                     "question": final_q, 
                     "answer": client_response, 
-                    "pro_type": pro_type
+                    "pro_type": pro_type,
+                    "is_metaphor": is_metaphor
                 })
                 st.rerun()
