@@ -1,6 +1,5 @@
 import streamlit as st
 from datetime import datetime
-import re
 
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Clean Language Facilitator PRO", layout="wide")
@@ -11,18 +10,7 @@ if 'history' not in st.session_state:
 if 'desired_outcome' not in st.session_state:
     st.session_state.desired_outcome = ""
 
-# --- ANALYTICS LOGIC ---
-def get_metaphor_cloud(history):
-    stop_words = {"the", "and", "a", "to", "of", "in", "is", "it", "that", "i", "was", "for", "on", "are", "with", "as", "be", "at", "my", "me", "like", "you", "have"}
-    all_text = " ".join([item['answer'] for item in history]).lower()
-    words = re.findall(r'\w+', all_text)
-    counts = {}
-    for w in words:
-        if w not in stop_words and len(w) > 2:
-            counts[w] = counts.get(w, 0) + 1
-    return dict(sorted(counts.items(), key=lambda x: x[1], reverse=True)[:10])
-
-# --- SIDEBAR: ANALYTICS ---
+# --- SIDEBAR: PINNED OUTCOME & HISTORY ---
 with st.sidebar:
     st.title("🎯 Pinned Outcome")
     if st.session_state.desired_outcome:
@@ -34,13 +22,13 @@ with st.sidebar:
     
     st.divider()
     if st.session_state.history:
-        st.header("☁️ Metaphor Cloud")
-        cloud = get_metaphor_cloud(st.session_state.history)
-        for word, count in cloud.items():
-            size = 14 + (count * 2)
-            st.markdown(f"<span style='font-size:{size}px; opacity:{min(1.0, 0.4 + count/10)};'>{word}</span>", unsafe_allow_html=True)
+        st.header("📝 Session History")
+        for item in reversed(st.session_state.history):
+            st.caption(f"{item['pro_type']}")
+            st.write(f"**Q:** {item['question']}")
+            st.write(f"**A:** {item['answer']}")
+            st.divider()
     
-    st.divider()
     if st.button("🗑️ Clear History"):
         st.session_state.history = []
         st.rerun()
@@ -61,15 +49,15 @@ if not st.session_state.desired_outcome:
 elif len(st.session_state.history) == 0:
     st.subheader("2. Categorize the Response")
     st.write(f"The client said: **\"{st.session_state.desired_outcome}\"**")
-    cat = st.radio("Is this a Problem, a Remedy, or an Outcome?", ["Outcome", "Problem", "Remedy"])
+    cat = st.radio("Identify Response Type:", ["Outcome (Develop this)", "Problem (Transition this)", "Remedy (Move time forward)"])
     
     st.divider()
     if "Outcome" in cat:
-        st.success("✅ **Outcome:** Model this! Ask: 'And is there anything else about [Outcome]?'")
+        st.success("✅ **Action:** Model this. Suggested: 'And is there anything else about that [Outcome]?'")
     elif "Problem" in cat:
-        st.error("⚠️ **Problem:** Do NOT model this. Transition to: 'What would you like to have happen?'")
+        st.error("⚠️ **Action:** Do NOT model the problem. Ask: 'And when [Problem], what would you like to have happen?'")
     else:
-        st.warning("🔄 **Remedy:** This is a fix. Ask: 'And when [Remedy], then what happens?'")
+        st.warning("🔄 **Action:** This is a fix. Ask: 'And when [Remedy], then what happens?'")
     
     if st.button("Start Modeling"):
         st.session_state.history.append({"question": "Initial", "answer": st.session_state.desired_outcome, "pro_type": cat})
@@ -81,14 +69,20 @@ else:
     with col1:
         st.subheader("Question Builder")
         subject_x = st.text_input("Metaphor/Word (X):")
+        subject_y = st.text_input("Reference Word (Y) - Optional:")
         
-        # --- FIXED DICTIONARY BLOCK ---
+        # DEFINED QUESTION DICTIONARY
         questions = {
             "Developing (Outcomes)": [
                 "And is there anything else about [X]?",
                 "And what kind of [X] is that [X]?",
                 "And whereabouts is [X]?",
                 "And does [X] have a size or a shape?"
+            ],
+            "Relationship (Space)": [
+                "And is there a relationship between [X] and [Y]?",
+                "And when [X], what happens to [Y]?",
+                "And whereabouts is [X] in relation to [Y]?"
             ],
             "Transitioning (Problems)": [
                 "And when [X], what would you like to have happen?",
@@ -101,25 +95,36 @@ else:
             ]
         }
         
-        stage = st.selectbox("Stage:", list(questions.keys()))
+        stage = st.selectbox("Select Category:", list(questions.keys()))
         
         # HELPER TEXT
-        if stage == "Developing (Outcomes)":
-            st.help("Build the landscape. Only develop Outcome words.")
-        elif stage == "Transitioning (Problems)":
-            st.help("Bridge back to the goal from a Problem.")
-        elif stage == "Moving Time (Remedies)":
-            st.help("Discover what happens next after a Remedy.")
+        if "Developing" in stage:
+            st.help("Focus on Outcome metaphors to build the internal landscape.")
+        elif "Relationship" in stage:
+            st.help("Explore how different parts of the client's model interact.")
+        elif "Transitioning" in stage:
+            st.help("Bridges the gap from a Problem back to the Pinned Outcome.")
+        elif "Moving" in stage:
+            st.help("Moves the sequence forward to find the actual benefit of a Remedy.")
 
-        selected_q = st.selectbox("Question:", questions[stage])
-        final_q = selected_q.replace("[X]", f"'{subject_x}'").replace("[Pinned Outcome]", f"'{st.session_state.desired_outcome}'")
+        selected_q = st.selectbox("Choose Question:", questions[stage])
+        
+        # String Replacement Logic
+        final_q = selected_q.replace("[X]", f"'{subject_x}'")
+        final_q = final_q.replace("[Y]", f"'{subject_y}'")
+        final_q = final_q.replace("[Pinned Outcome]", f"'{st.session_state.desired_outcome}'")
 
     with col2:
         st.subheader("Log Response")
         st.markdown(f"**ASK:** `{final_q}`")
-        client_response = st.text_area("Client Response:")
-        pro_type = st.radio("Category:", ["Outcome", "Problem", "Remedy"], horizontal=True)
-        if st.button("Log Entry"):
+        client_response = st.text_area("Client Response:", height=150)
+        pro_type = st.radio("Categorize Response:", ["Outcome", "Problem", "Remedy"], horizontal=True)
+        
+        if st.button("Log and Continue"):
             if client_response:
-                st.session_state.history.append({"question": final_q, "answer": client_response, "pro_type": pro_type})
+                st.session_state.history.append({
+                    "question": final_q, 
+                    "answer": client_response, 
+                    "pro_type": pro_type
+                })
                 st.rerun()
