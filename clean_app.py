@@ -1,120 +1,96 @@
 import streamlit as st
 from datetime import datetime
+import re
 
-# Page Configuration
-st.set_page_config(
-    page_title="Clean Language Facilitator", 
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# --- CONFIGURATION ---
+st.set_page_config(page_title="Clean Language Facilitator PRO", layout="wide")
 
-# 1. Session State Initialization (The "Memory")
+# --- INITIALIZE STATE ---
 if 'history' not in st.session_state:
     st.session_state.history = []
+if 'desired_outcome' not in st.session_state:
+    st.session_state.desired_outcome = ""
 
-# 2. Sidebar: History & Export
+# --- ANALYTICS LOGIC ---
+def get_metaphor_cloud(history):
+    stop_words = {"the", "and", "a", "to", "of", "in", "is", "it", "that", "i", "was", "for", "on", "are", "with", "as", "be", "at", "my", "me", "like", "you", "have"}
+    all_text = " ".join([item['answer'] for item in history]).lower()
+    words = re.findall(r'\w+', all_text)
+    counts = {}
+    for w in words:
+        if w not in stop_words and len(w) > 2:
+            counts[w] = counts.get(w, 0) + 1
+    return dict(sorted(counts.items(), key=lambda x: x[1], reverse=True)[:10])
+
+pro_counts = {"Outcome": 0, "Problem": 0, "Remedy": 0}
+for item in st.session_state.history:
+    if "Outcome" in item['pro_type']: pro_counts["Outcome"] += 1
+    elif "Problem" in item['pro_type']: pro_counts["Problem"] += 1
+    elif "Remedy" in item['pro_type']: pro_counts["Remedy"] += 1
+total_logs = sum(pro_counts.values())
+
+# --- SIDEBAR: ANALYTICS & PINNED OUTCOME ---
 with st.sidebar:
-    st.header("📝 Session History")
-    
-    # Generate Transcript for Download
-    transcript_text = "CLEAN LANGUAGE SESSION TRANSCRIPT\n"
-    transcript_text += f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
-    transcript_text += "="*40 + "\n\n"
-    
-    for i, item in enumerate(st.session_state.history):
-        transcript_text += f"{i+1}. Question: {item['question']}\n"
-        transcript_text += f"   Answer: {item['answer']}\n"
-        if item['notes']:
-            transcript_text += f"   Notes: {item['notes']}\n"
-        transcript_text += "-"*20 + "\n"
-
-    st.download_button(
-        label="📥 Download Session (.txt)",
-        data=transcript_text,
-        file_name=f"clean_session_{datetime.now().strftime('%y%m%d_%H%M')}.txt",
-        mime="text/plain"
-    )
-
-    if st.button("🗑️ Clear Session"):
-        st.session_state.history = []
-        st.rerun()
+    st.title("🎯 Pinned Outcome")
+    if st.session_state.desired_outcome:
+        st.success(f"**{st.session_state.desired_outcome}**")
+        if st.button("Reset Session"):
+            st.session_state.history = []
+            st.session_state.desired_outcome = ""
+            st.rerun()
     
     st.divider()
-    
-    # Visual History Feed
-    for item in reversed(st.session_state.history):
-        st.caption(f"Q: {item['question']}")
-        st.write(f"A: {item['answer']}")
-        if item['notes']:
-            st.info(f"Note: {item['notes']}")
+    st.header("📊 Session Balance")
+    if total_logs > 0:
+        st.caption(f"Outcome ({int((pro_counts['Outcome']/total_logs)*100)}%)")
+        st.progress(pro_counts["Outcome"]/total_logs)
+        st.caption(f"Problem ({int((pro_counts['Problem']/total_logs)*100)}%)")
+        st.progress(pro_counts["Problem"]/total_logs)
+        
         st.divider()
+        st.header("☁️ Metaphor Cloud")
+        cloud = get_metaphor_cloud(st.session_state.history)
+        for word, count in cloud.items():
+            size = 14 + (count * 2)
+            st.markdown(f"<span style='font-size:{size}px; opacity:{min(1.0, 0.4 + count/10)};'>{word}</span>", unsafe_allow_html=True)
+    
+    st.divider()
+    transcript = f"Outcome: {st.session_state.desired_outcome}\n\n"
+    for item in st.session_state.history:
+        transcript += f"[{item['pro_type']}] {item['question']} -> {item['answer']}\n"
+    st.download_button("📥 Download Transcript", data=transcript, file_name="clean_session.txt")
 
-# 3. Main Interface
+# --- MAIN INTERFACE ---
 st.title("Clean Language Facilitator")
-st.markdown("Developed by James Lawley and Penny Tompkins")
 
-col1, col2 = st.columns([1, 1])
+if not st.session_state.desired_outcome:
+    st.subheader("1. Start the Session")
+    st.warning("And what would you like to have happen?")
+    initial_outcome = st.text_input("Client's response:", key="init_out")
+    if st.button("Initialize") and initial_outcome:
+        st.session_state.desired_outcome = initial_outcome
+        st.session_state.history.append({"question": "Start", "answer": initial_outcome, "pro_type": "Outcome"})
+        st.rerun()
+else:
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.subheader("Question Builder")
+        subject_x = st.text_input("Metaphor/Word (X):")
+        questions = {
+            "Developing (Outcomes)": ["And what kind of [X] is that?", "And is there anything else about [X]?", "And whereabouts is [X]?"],
+            "Transitioning (Problems)": ["And when [X], what would you like to have happen?", "And what needs to happen for [Pinned]?"],
+            "Moving Time (Remedies)": ["And when [X], then what happens?", "And what happens just before [X]?"]
+        }
+        stage = st.selectbox("Stage:", list(questions.keys()))
+        selected_q = st.selectbox("Question:", questions[stage])
+        final_q = selected_q.replace("[X]", f"'{subject_x}'").replace("[Pinned]", f"'{st.session_state.desired_outcome}'")
 
-with col1:
-    st.subheader("1. Setup Metadata")
-    subject_x = st.text_input("Current Metaphor/Word (X):", placeholder="e.g., 'a heavy knot'")
-    subject_y = st.text_input("Reference Word (Y) - Optional:", placeholder="e.g., 'the blue light'")
-
-    # Full Question Bank organized by Lawley & Tompkins' Staging logic
-    questions = {
-        "Developing (Attributes)": [
-            "And is there anything else about [X]?",
-            "And what kind of [X] is that [X]?",
-            "And that [X] is like what?",
-            "And does [X] have a size or a shape?",
-            "And does [X] have a color?",
-            "And how old is [X]?"
-        ],
-        "Developing (Location)": [
-            "And whereabouts is [X]?",
-            "And is [X] on the inside or the outside?",
-            "And is [X] to the front or the back?",
-            "And is [X] to the left or the right?",
-            "And how far away is [X]?"
-        ],
-        "Space & Relationship": [
-            "And is there a relationship between [X] and [Y]?",
-            "And is [X] the same or different to [Y]?",
-            "And what happens to [Y] when [X] happens?",
-            "And what is [X] to [Y]?"
-        ],
-        "Time & Sequence": [
-            "And what happens just before [X]?",
-            "And then what happens?",
-            "And where could [X] come from?"
-        ],
-        "Desired Outcome": [
-            "And what would you like to have happen?",
-            "And what needs to happen for [X] to [Y]?",
-            "And can [X] [Y]?"
-        ]
-    }
-
-    stage = st.selectbox("Current Stage:", list(questions.keys()))
-    selected_q_template = st.selectbox("Select Question:", questions[stage])
-    
-    # Format the prompt
-    final_q = selected_q_template.replace("[X]", f"'{subject_x}'").replace("[Y]", f"'{subject_y}'")
-
-with col2:
-    st.subheader("2. Facilitate & Record")
-    st.warning(f"**READ ALOUD:** {final_q}")
-    
-    client_answer = st.text_area("Client's response:", height=150)
-    fac_notes = st.text_input("Observation Notes (gestures, pauses, shifts):")
-    
-    if st.button("➕ Log Entry"):
-        if subject_x and client_answer:
-            st.session_state.history.append({
-                "question": final_q,
-                "answer": client_answer,
-                "notes": fac_notes
-            })
-            st.rerun()
-        else:
-            st.error("Please enter both the subject (X) and the client's answer.")
+    with col2:
+        st.subheader("Log Response")
+        st.markdown(f"**ASK:** `{final_q}`")
+        client_response = st.text_area("Client Response:")
+        pro_type = st.radio("Category:", ["Outcome", "Problem", "Remedy"], horizontal=True)
+        if st.button("Log and Analyze"):
+            if client_response:
+                st.session_state.history.append({"question": final_q, "answer": client_response, "pro_type": pro_type})
+                st.rerun()
