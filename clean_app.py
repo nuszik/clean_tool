@@ -35,7 +35,13 @@ with st.sidebar:
         
         st.download_button("Download .txt Transcript", transcript, f"session_{datetime.now().strftime('%Y%m%d')}.txt")
 
-    if st.button("🗑️ Clear History"):
+        st.divider()
+        if st.button("↩️ Undo Last Entry"):
+            if st.session_state.history:
+                st.session_state.history.pop()
+                st.rerun()
+
+    if st.button("🗑️ Clear All"):
         st.session_state.history = []
         st.rerun()
 
@@ -74,14 +80,7 @@ else:
             subject_x = st.text_input("Metaphor/Word (X):")
             subject_y = st.text_input("Reference Word (Y):")
             
-            # --- INTELLIGENT STAGING ---
-            last_5 = st.session_state.history[-5:]
-            rel_asked = any("relationship" in item['question'].lower() or "relation" in item['question'].lower() for item in last_5)
-            
-            if not rel_asked and len(st.session_state.history) >= 5:
-                st.info("💡 **Tip:** Consider a 'Relationship' question to link the landscape.")
-
-            # --- QUICK ATTRIBUTES BAR ---
+            # QUICK ATTRIBUTES BAR
             st.write("**Quick Sensory Attributes:**")
             q_cols = st.columns(4)
             if q_cols[0].button("📍 Location"): st.session_state.active_q = "And whereabouts is [X]?"
@@ -123,8 +122,6 @@ else:
 
         with col2:
             st.subheader("Log Response")
-            
-            # --- FIXED BACKGROUND (Standard Input Look) ---
             border_color = "#2196F3" 
             if "Transitioning" in stage: border_color = "#F44336"
             if "Moving" in stage: border_color = "#FF9800"
@@ -132,7 +129,7 @@ else:
             st.markdown(f"""
                 <div style="border: 2px solid {border_color}; padding:15px; border-radius:10px; background-color: #f0f2f6; color: #31333F;">
                 <strong style="color:{border_color};">ASK:</strong><br>
-                <span style="font-size: 1.15em; font-family: 'Source Sans Pro', sans-serif; font-weight: 500;">{final_q}</span>
+                <span style="font-size: 1.15em; font-family: sans-serif; font-weight: 500;">{final_q}</span>
                 </div>
                 """, unsafe_allow_html=True)
             
@@ -165,7 +162,7 @@ else:
             m_cols = st.columns(3)
             for i, item in enumerate(metaphors):
                 with m_cols[i % 3]:
-                    st.success(f"🔮 {item['answer'][:50]}...")
+                    st.success(f"🔮 {item['answer'][:60]}...")
         
         st.divider()
         st.subheader("Full Session Transcript")
