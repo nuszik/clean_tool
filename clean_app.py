@@ -42,6 +42,10 @@ with st.sidebar:
             st.write(f"**A:** {item['answer']}")
             st.divider()
 
+    if st.button("🗑️ Clear History"):
+        st.session_state.history = []
+        st.rerun()
+
 # --- MAIN INTERFACE ---
 st.title("Clean Language Facilitator")
 
@@ -57,8 +61,15 @@ elif len(st.session_state.history) == 0:
     st.subheader("2. Categorize the Response")
     st.write(f"The client said: **\"{st.session_state.desired_outcome}\"**")
     cat = st.radio("Type:", ["Outcome", "Problem", "Remedy"], horizontal=True)
+    
+    # Update: This button now logs the actual question text
     if st.button("Start Modeling"):
-        st.session_state.history.append({"question": "Initial", "answer": st.session_state.desired_outcome, "pro_type": cat, "is_metaphor": False})
+        st.session_state.history.append({
+            "question": "And what would you like to have happen?", 
+            "answer": st.session_state.desired_outcome, 
+            "pro_type": cat, 
+            "is_metaphor": False
+        })
         st.rerun()
 
 else:
@@ -69,10 +80,25 @@ else:
         subject_y = st.text_input("Reference Word (Y):")
         
         questions = {
-            "Developing (Outcomes)": ["And is there anything else about [X]?", "And what kind of [X] is that [X]?", "And whereabouts is [X]?", "And does [X] have a size or a shape?"],
-            "Relationship (Space)": ["And is there a relationship between [X] and [Y]?", "And when [X], what happens to [Y]?", "And whereabouts is [X] in relation to [Y]?"],
-            "Transitioning (Problems)": ["And when [X], what would you like to have happen?", "And what needs to happen for [Pinned Outcome]?"],
-            "Moving Time (Remedies)": ["And when [X], then what happens?", "And what happens just before [X]?"]
+            "Developing (Outcomes)": [
+                "And is there anything else about [X]?", 
+                "And what kind of [X] is that [X]?", 
+                "And whereabouts is [X]?", 
+                "And does [X] have a size or a shape?"
+            ],
+            "Relationship (Space)": [
+                "And is there a relationship between [X] and [Y]?", 
+                "And when [X], what happens to [Y]?", 
+                "And whereabouts is [X] in relation to [Y]?"
+            ],
+            "Transitioning (Problems)": [
+                "And when [X], what would you like to have happen?", 
+                "And what needs to happen for [Pinned Outcome]?"
+            ],
+            "Moving Time (Remedies)": [
+                "And when [X], then what happens?", 
+                "And what happens just before [X]?"
+            ]
         }
         
         stage = st.selectbox("Category:", list(questions.keys()))
@@ -85,15 +111,13 @@ else:
         st.markdown(f"**ASK:** `{final_q}`")
         client_response = st.text_area("Client Response:", height=200)
         
-        # --- ALIGNED LOGGING ROW ---
         log_col1, log_col2, log_col3 = st.columns([2, 1, 1])
         with log_col1:
             pro_type = st.radio("PRO:", ["Outcome", "Problem", "Remedy"], horizontal=True)
         with log_col2:
-            # We use a radio button here instead of a checkbox so it aligns with the PRO radio buttons
             is_meta_choice = st.radio("Is Metaphor?", ["No", "Yes"], horizontal=True)
         with log_col3:
-            st.write(" ") # Padding to push button down
+            st.write(" ")
             st.write(" ")
             log_btn = st.button("Log Entry")
         
