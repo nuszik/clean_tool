@@ -32,15 +32,6 @@ with st.sidebar:
             transcript += f"{i+1}. [{item['pro_type']}] {m_tag}\n   Q: {item['question']}\n   A: {item['answer']}\n\n"
         
         st.download_button("Download .txt Transcript", transcript, f"session_{datetime.now().strftime('%Y%m%d')}.txt")
-        
-        st.divider()
-        st.header("📝 History")
-        for item in reversed(st.session_state.history):
-            label = "🔮 Metaphor" if item.get('is_metaphor') else "💬 Concept"
-            st.caption(f"{item['pro_type']} | {label}")
-            st.write(f"**Q:** {item['question']}")
-            st.write(f"**A:** {item['answer']}")
-            st.divider()
 
     if st.button("🗑️ Clear History"):
         st.session_state.history = []
@@ -61,8 +52,6 @@ elif len(st.session_state.history) == 0:
     st.subheader("2. Categorize the Response")
     st.write(f"The client said: **\"{st.session_state.desired_outcome}\"**")
     cat = st.radio("Type:", ["Outcome", "Problem", "Remedy"], horizontal=True)
-    
-    # Update: This button now logs the actual question text
     if st.button("Start Modeling"):
         st.session_state.history.append({
             "question": "And what would you like to have happen?", 
@@ -73,59 +62,94 @@ elif len(st.session_state.history) == 0:
         st.rerun()
 
 else:
-    col1, col2 = st.columns([1, 1], gap="large")
-    with col1:
-        st.subheader("Question Builder")
-        subject_x = st.text_input("Metaphor/Word (X):")
-        subject_y = st.text_input("Reference Word (Y):")
-        
-        questions = {
-            "Developing (Outcomes)": [
-                "And is there anything else about [X]?", 
-                "And what kind of [X] is that [X]?", 
-                "And whereabouts is [X]?", 
-                "And does [X] have a size or a shape?"
-            ],
-            "Relationship (Space)": [
-                "And is there a relationship between [X] and [Y]?", 
-                "And when [X], what happens to [Y]?", 
-                "And whereabouts is [X] in relation to [Y]?"
-            ],
-            "Transitioning (Problems)": [
-                "And when [X], what would you like to have happen?", 
-                "And what needs to happen for [Pinned Outcome]?"
-            ],
-            "Moving Time (Remedies)": [
-                "And when [X], then what happens?", 
-                "And what happens just before [X]?"
-            ]
-        }
-        
-        stage = st.selectbox("Category:", list(questions.keys()))
-        selected_q = st.selectbox("Question:", questions[stage])
-        
-        final_q = selected_q.replace("[X]", f"'{subject_x}'").replace("[Y]", f"'{subject_y}'").replace("[Pinned Outcome]", f"'{st.session_state.desired_outcome}'")
+    # --- CREATE TABS ---
+    tab1, tab2 = st.tabs(["🚀 Active Session", "🖼️ Symbolic Landscape"])
 
-    with col2:
-        st.subheader("Log Response")
-        st.markdown(f"**ASK:** `{final_q}`")
-        client_response = st.text_area("Client Response:", height=200)
+    with tab1:
+        col1, col2 = st.columns([1, 1], gap="large")
+        with col1:
+            st.subheader("Question Builder")
+            subject_x = st.text_input("Metaphor/Word (X):")
+            subject_y = st.text_input("Reference Word (Y):")
+            
+            questions = {
+                "Developing (Outcomes)": [
+                    "And is there anything else about [X]?", 
+                    "And what kind of [X] is that [X]?", 
+                    "And whereabouts is [X]?", 
+                    "And does [X] have a size or a shape?"
+                ],
+                "Relationship (Space)": [
+                    "And is there a relationship between [X] and [Y]?", 
+                    "And when [X], what happens to [Y]?", 
+                    "And whereabouts is [X] in relation to [Y]?"
+                ],
+                "Transitioning (Problems)": [
+                    "And when [X], what would you like to have happen?", 
+                    "And what needs to happen for [Pinned Outcome]?"
+                ],
+                "Moving Time (Remedies/Intent)": [
+                    "And when [X], then what happens?", 
+                    "And what happens just before [X]?",
+                    "And what does [X] want?",
+                    "And what is the intention of [X]?"
+                ]
+            }
+            
+            stage = st.selectbox("Category:", list(questions.keys()))
+            selected_q = st.selectbox("Question:", questions[stage])
+            final_q = selected_q.replace("[X]", f"'{subject_x}'").replace("[Y]", f"'{subject_y}'").replace("[Pinned Outcome]", f"'{st.session_state.desired_outcome}'")
+
+        with col2:
+            st.subheader("Log Response")
+            # Dynamic color coding for the question box
+            q_color = "#E1F5FE" if "Developing" in stage else "#FFF3E0"
+            if "Transitioning" in stage: q_color = "#FFEBEE"
+            
+            st.markdown(f"""<div style="background-color:{q_color}; padding:15px; border-radius:10px; border-left: 5px solid #2196F3;">
+                <strong>ASK:</strong><br><code>{final_q}</code></div>""", unsafe_allow_html=True)
+            
+            st.write("")
+            client_response = st.text_area("Client Response:", height=150)
+            
+            log_col1, log_col2, log_col3 = st.columns([2, 1, 1])
+            with log_col1:
+                pro_type = st.radio("PRO:", ["Outcome", "Problem", "Remedy"], horizontal=True)
+            with log_col2:
+                is_meta_choice = st.radio("Is Metaphor?", ["No", "Yes"], horizontal=True)
+            with log_col3:
+                st.write(" ")
+                st.write(" ")
+                if st.button("Log Entry") and client_response:
+                    st.session_state.history.append({
+                        "question": final_q, 
+                        "answer": client_response, 
+                        "pro_type": pro_type,
+                        "is_metaphor": (is_meta_choice == "Yes")
+                    })
+                    st.rerun()
+
+    with tab2:
+        st.subheader("The Symbolic Landscape")
+        st.info("These are all the metaphors (Symbols) identified in this session so far.")
         
-        log_col1, log_col2, log_col3 = st.columns([2, 1, 1])
-        with log_col1:
-            pro_type = st.radio("PRO:", ["Outcome", "Problem", "Remedy"], horizontal=True)
-        with log_col2:
-            is_meta_choice = st.radio("Is Metaphor?", ["No", "Yes"], horizontal=True)
-        with log_col3:
-            st.write(" ")
-            st.write(" ")
-            log_btn = st.button("Log Entry")
+        # Filter only metaphors
+        metaphors = [item for item in st.session_state.history if item.get('is_metaphor')]
         
-        if log_btn and client_response:
-            st.session_state.history.append({
-                "question": final_q, 
-                "answer": client_response, 
-                "pro_type": pro_type,
-                "is_metaphor": (is_meta_choice == "Yes")
-            })
-            st.rerun()
+        if not metaphors:
+            st.write("No metaphors identified yet. Tag a response as 'Yes' for 'Is Metaphor?' to see it here.")
+        else:
+            # Display symbols in a grid or clean list
+            for item in metaphors:
+                with st.expander(f"🔮 Symbol Found in response to: {item['question'][:40]}..."):
+                    st.write(f"**Full Answer:** {item['answer']}")
+                    st.caption(f"Status: {item['pro_type']}")
+
+        st.divider()
+        st.subheader("Full Transcript")
+        for item in reversed(st.session_state.history):
+            label = "🔮 Metaphor" if item.get('is_metaphor') else "💬 Concept"
+            st.caption(f"{item['pro_type']} | {label}")
+            st.write(f"**Q:** {item['question']}")
+            st.write(f"**A:** {item['answer']}")
+            st.divider()
