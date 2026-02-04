@@ -1,22 +1,32 @@
 import streamlit as st
 from datetime import datetime
-import re
 
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Clean Language Facilitator PRO", layout="wide")
 
-# --- CSS FOR MINI-BUTTONS & UI ---
+# --- CSS FOR MINI-BUTTONS ---
 st.markdown("""
     <style>
-    button[kind="secondary"] p { font-size: 10px !important; font-weight: bold !important; }
-    button[kind="secondary"] { padding: 0px 5px !important; height: 24px !important; min-height: 24px !important; }
-    .word-bank-item { font-size: 12px; background-color: #f0f2f6; padding: 2px 8px; border-radius: 10px; margin: 2px; display: inline-block; border: 1px solid #d1d5db; color: #31333F; }
+    div[data-testid="column"] button {
+        font-size: 10px !important;
+        padding: 1px 5px !important;
+        min-height: 25px !important;
+        height: 25px !important;
+        line-height: 1 !important;
+        border-radius: 4px !important;
+    }
+    div[data-testid="column"] button p {
+        font-size: 10px !important;
+        margin: 0 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # --- INITIALIZE STATE ---
-if 'history' not in st.session_state: st.session_state.history = []
-if 'desired_outcome' not in st.session_state: st.session_state.desired_outcome = ""
+if 'history' not in st.session_state:
+    st.session_state.history = []
+if 'desired_outcome' not in st.session_state:
+    st.session_state.desired_outcome = ""
 
 QUESTIONS = {
     "Developing (Outcomes)": ["And is there anything else about [X]?", "And what kind of [X] is that [X]?", "And whereabouts is [X]?", "And does [X] have a size or a shape?"],
@@ -40,18 +50,8 @@ with st.sidebar:
         
     st.divider()
     
-    # --- WORD BANK ---
-    st.subheader("📋 Client Lexicon")
-    all_text = " ".join([item['answer'] for item in st.session_state.history])
-    words = list(set(re.findall(r'\b\w{4,}\b', all_text.lower())))
-    if words:
-        for word in words[:12]:
-            st.markdown(f'<span class="word-bank-item">{word}</span>', unsafe_allow_html=True)
-    
-    st.divider()
     if st.session_state.history:
         st.header("📥 Session Control")
-        # Export logic
         transcript = f"CLEAN LANGUAGE SESSION - {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
         transcript += f"PINNED OUTCOME: {st.session_state.desired_outcome}\n"
         transcript += "="*40 + "\n\n"
@@ -156,7 +156,7 @@ else:
 
     with tab3:
         st.header("The Clean 12 Questions")
-        
+        st.caption("Developed by Penny Tompkins & James Lawley")
         c1, c2 = st.columns(2)
         with c1:
             st.subheader("Developing")
@@ -166,20 +166,44 @@ else:
             st.markdown("- **Sequence:** And what happens just before [X]?\n- **Sequence:** And then what happens?\n- **Source:** And where could that [X] come from?\n- **Intention:** And what does [X] want to have happen?\n- **Conditions:** And what needs to happen for [X]?\n- **Conditions:** And can [X] [Y]?")
         
         st.divider()
-        st.header("The PRO Model")
+        st.header("The Comprehensive PRO Model")
+        st.write("Strategic classification used to determine the focus of facilitation.")
         
         p1, p2, p3 = st.columns(3)
         with p1:
-            st.error("**Problem**")
-            st.caption("Ask: 'And what would you like to have happen?'")
+            st.error("### P - Problem")
+            st.markdown("""
+            **Definition:** Unwanted states, descriptions of what's wrong, or "Away From" language.
+            
+            **Facilitator Goal:** Move the client's focus to a desired state.
+            
+            **The Strategic Question:**
+            - *"And when [Problem], what would you like to have happen?"*
+            """)
+            
         with p2:
-            st.warning("**Remedy**")
-            st.caption("Ask: 'And when [Remedy], then what happens?'")
+            st.warning("### R - Remedy")
+            st.markdown("""
+            **Definition:** Conceptual solutions, "Towards" language without sensory detail, or "Fixes" (e.g., 'I need confidence').
+            
+            **Facilitator Goal:** Move time forward to discover the consequence of the remedy.
+            
+            **The Strategic Question:**
+            - *"And when [Remedy], then what happens?"*
+            """)
+            
         with p3:
-            st.success("**Outcome**")
-            st.caption("Action: Develop with sensory questions.")
+            st.success("### O - Outcome")
+            st.markdown("""
+            **Definition:** The desired state. Sensory-rich descriptions of what the client wants.
+            
+            **Facilitator Goal:** Model the system. Develop the attributes and relationships.
+            
+            **The Strategic Action:**
+            - Apply the **Developing Questions** to build the symbolic landscape.
+            """)
         
         st.divider()
-        st.header("💡 Facilitator Tip: The Pivot")
-        st.info("**'And [Concept] is like what?'**")
-        st.write("Use this to turn a conceptual Remedy or Outcome into a Metaphorical Symbol.")
+        st.subheader("The Pivot: Concept to Metaphor")
+        st.write("If an Outcome is conceptual (e.g., 'I want clarity'), pivot to a metaphor to begin Symbolic Modeling:")
+        st.info("**'And [Clarity] is like what?'**")
