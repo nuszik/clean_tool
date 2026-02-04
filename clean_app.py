@@ -4,20 +4,20 @@ from datetime import datetime
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Clean Language Facilitator PRO", layout="wide")
 
-# --- REFINED CSS FOR MINI-BUTTONS ---
+# --- AGGRESSIVE CSS FOR MINI-BUTTONS ---
 st.markdown("""
     <style>
-    div[data-testid="column"] button {
+    /* Targeting the button text specifically */
+    button[kind="secondary"] p {
         font-size: 10px !important;
-        padding: 1px 5px !important;
-        min-height: 25px !important;
-        height: 25px !important;
-        line-height: 1 !important;
-        border-radius: 4px !important;
+        font-weight: bold !important;
     }
-    div[data-testid="column"] button p {
-        font-size: 10px !important;
-        margin: 0 !important;
+    /* Reducing button padding and height */
+    button[kind="secondary"] {
+        padding: 0px 5px !important;
+        height: 24px !important;
+        min-height: 24px !important;
+        line-height: 1 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -27,8 +27,25 @@ if 'history' not in st.session_state:
     st.session_state.history = []
 if 'desired_outcome' not in st.session_state:
     st.session_state.desired_outcome = ""
+
+# Define the question set globally for logic access
+QUESTIONS = {
+    "Developing (Outcomes)": ["And is there anything else about [X]?", "And what kind of [X] is that [X]?", "And whereabouts is [X]?", "And does [X] have a size or a shape?"],
+    "Relationship (Space)": ["And is there a relationship between [X] and [Y]?", "And when [X], what happens to [Y]?", "And whereabouts is [X] in relation to [Y]?"],
+    "Transitioning (Problems)": ["And when [X], what would you like to have happen?", "And what needs to happen for [Pinned Outcome]?"],
+    "Moving Time (Remedies/Intent)": ["And when [X], then what happens?", "And what happens just before [X]?", "And what does [X] want?", "And what is the intention of [X]?"]
+}
+
+# --- CALLBACK FUNCTIONS FOR BUTTONS ---
+def set_question(q_text, category):
+    st.session_state.active_q = q_text
+    st.session_state.active_cat = category
+
+# Initialize active selections if not present
+if 'active_cat' not in st.session_state:
+    st.session_state.active_cat = "Developing (Outcomes)"
 if 'active_q' not in st.session_state:
-    st.session_state.active_q = "And is there anything else about [X]?"
+    st.session_state.active_q = QUESTIONS["Developing (Outcomes)"][0]
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -97,24 +114,23 @@ else:
             
             st.write("**Quick Sensory Attributes:**")
             q_cols = st.columns(4)
-            if q_cols[0].button("📍 Location"): st.session_state.active_q = "And whereabouts is [X]?"
-            if q_cols[1].button("📏 Size/Shape"): st.session_state.active_q = "And does [X] have a size or a shape?"
-            if q_cols[2].button("🎨 Texture"): st.session_state.active_q = "And what kind of [X] is that [X]?"
-            if q_cols[3].button("⏳ Time"): st.session_state.active_q = "And what happens just before [X]?"
+            # Buttons now use callbacks to ensure the state updates BEFORE the rerun
+            q_cols[0].button("📍 Location", on_click=set_question, args=("And whereabouts is [X]?", "Developing (Outcomes)"))
+            q_cols[1].button("📏 Size/Shape", on_click=set_question, args=("And does [X] have a size or a shape?", "Developing (Outcomes)"))
+            q_cols[2].button("🎨 Texture", on_click=set_question, args=("And what kind of [X] is that [X]?", "Developing (Outcomes)"))
+            q_cols[3].button("⏳ Time", on_click=set_question, args=("And what happens just before [X]?", "Moving Time (Remedies/Intent)"))
 
-            questions = {
-                "Developing (Outcomes)": ["And is there anything else about [X]?", "And what kind of [X] is that [X]?", "And whereabouts is [X]?", "And does [X] have a size or a shape?"],
-                "Relationship (Space)": ["And is there a relationship between [X] and [Y]?", "And when [X], what happens to [Y]?", "And whereabouts is [X] in relation to [Y]?"],
-                "Transitioning (Problems)": ["And when [X], what would you like to have happen?", "And what needs to happen for [Pinned Outcome]?"],
-                "Moving Time (Remedies/Intent)": ["And when [X], then what happens?", "And what happens just before [X]?", "And what does [X] want?", "And what is the intention of [X]?"]
-            }
+            # Link Selectboxes to Session State
+            stage = st.selectbox("Category:", list(QUESTIONS.keys()), key="active_cat")
             
-            stage = st.selectbox("Category:", list(questions.keys()))
-            current_options = questions[stage]
-            if st.session_state.active_q not in current_options and "[X]" in st.session_state.active_q:
-                current_options = [st.session_state.active_q] + current_options
+            # Ensure the active question is actually in the list of options to prevent index errors
+            options = QUESTIONS[stage]
+            if st.session_state.active_q not in options:
+                # If we switched categories, default to the first question of that category
+                st.session_state.active_q = options[0]
+
+            selected_q = st.selectbox("Question:", options, key="active_q")
             
-            selected_q = st.selectbox("Question:", current_options, index=0)
             final_q = selected_q.replace("[X]", f"'{subject_x}'").replace("[Y]", f"'{subject_y}'").replace("[Pinned Outcome]", f"'{st.session_state.desired_outcome}'")
 
         with col2:
@@ -136,6 +152,7 @@ else:
                 st.write(" "); st.write(" ")
                 if st.button("Log Entry") and client_response:
                     st.session_state.history.append({"question": final_q, "answer": client_response, "pro_type": pro_type, "is_metaphor": (is_meta_choice == "Yes")})
+                    # Clear inputs for next round
                     st.rerun()
 
     with tab2:
@@ -198,10 +215,5 @@ else:
 
         st.divider()
         st.header("💡 Facilitator Tip: The Pivot")
-        st.write("To move a client from a **Concept** (Remedy/Outcome) to a **Metaphor**, use the 'Like What' question:")
         st.success("**'And [Concept] is like what?'**")
-        st.markdown("""
-        1. **Wait** for the client to provide an image (e.g., 'It's like a heavy weight').
-        2. **Tag** as Metaphor (🔮) in the logger.
-        3. **Develop** the sensory qualities (Size, Shape, Location) of that image.
-        """)
+        st.write("To move a client from a Concept to a Metaphor, use the 'Like What' question. Wait for the image, then model its sensory qualities (Size, Shape, Location).")
