@@ -97,15 +97,15 @@ else:
         
         stage = st.selectbox("Select Category:", list(questions.keys()))
         
-        # HELPER TEXT
+        # --- FIXED HELPER TEXT (Using st.info instead of st.help) ---
         if "Developing" in stage:
-            st.help("Focus on Outcome metaphors to build the internal landscape.")
+            st.info("Focus on Outcome metaphors to build the internal landscape.")
         elif "Relationship" in stage:
-            st.help("Explore how different parts of the client's model interact.")
+            st.info("Explore how different parts of the client's model interact.")
         elif "Transitioning" in stage:
-            st.help("Bridges the gap from a Problem back to the Pinned Outcome.")
+            st.info("Bridges the gap from a Problem back to the Pinned Outcome.")
         elif "Moving" in stage:
-            st.help("Moves the sequence forward to find the actual benefit of a Remedy.")
+            st.info("Moves the sequence forward to find the actual benefit of a Remedy.")
 
         selected_q = st.selectbox("Choose Question:", questions[stage])
         
