@@ -19,6 +19,14 @@ st.markdown("""
         font-size: 10px !important;
         margin: 0 !important;
     }
+    /* Style for the Ask box to ensure readability */
+    .ask-box {
+        border-radius: 10px;
+        padding: 15px;
+        background-color: #f0f2f6;
+        color: #31333F;
+        margin-bottom: 10px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -28,6 +36,7 @@ if 'history' not in st.session_state:
 if 'desired_outcome' not in st.session_state:
     st.session_state.desired_outcome = ""
 
+# Define Global Questions
 QUESTIONS = {
     "Developing (Outcomes)": ["And is there anything else about [X]?", "And what kind of [X] is that [X]?", "And whereabouts is [X]?", "And does [X] have a size or a shape?"],
     "Relationship (Space)": ["And is there a relationship between [X] and [Y]?", "And when [X], what happens to [Y]?", "And whereabouts is [X] in relation to [Y]?"],
@@ -35,12 +44,16 @@ QUESTIONS = {
     "Moving Time (Remedies/Intent)": ["And when [X], then what happens?", "And what happens just before [X]?", "And what does [X] want?", "And what is the intention of [X]?"]
 }
 
+# Fix: Initialize selection states only if they don't exist
+if 'active_cat' not in st.session_state:
+    st.session_state.active_cat = "Developing (Outcomes)"
+if 'active_q' not in st.session_state:
+    st.session_state.active_q = QUESTIONS["Developing (Outcomes)"][0]
+
+# Callback for Quick Buttons
 def set_question(q_text, category):
     st.session_state.active_q = q_text
     st.session_state.active_cat = category
-
-if 'active_cat' not in st.session_state: st.session_state.active_cat = "Developing (Outcomes)"
-if 'active_q' not in st.session_state: st.session_state.active_q = QUESTIONS["Developing (Outcomes)"][0]
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -104,10 +117,20 @@ else:
             q_cols[2].button("🎨 Kind", on_click=set_question, args=("And what kind of [X] is that [X]?", "Developing (Outcomes)"))
             q_cols[3].button("⏳ Time", on_click=set_question, args=("And what happens just before [X]?", "Moving Time (Remedies/Intent)"))
 
+            # Categories and Questions
             stage = st.selectbox("Category:", list(QUESTIONS.keys()), key="active_cat")
             options = QUESTIONS[stage]
-            if st.session_state.active_q not in options: st.session_state.active_q = options[0]
-            selected_q = st.selectbox("Question:", options, key="active_q")
+            
+            # Validation: Ensure current active question exists in the chosen category's options
+            if st.session_state.active_q not in options:
+                current_q_index = 0
+            else:
+                current_q_index = options.index(st.session_state.active_q)
+
+            selected_q = st.selectbox("Question:", options, index=current_q_index, key="q_selector")
+            # Update state if manually changed in dropdown
+            st.session_state.active_q = selected_q
+            
             final_q = selected_q.replace("[X]", f"'{subject_x}'").replace("[Y]", f"'{subject_y}'").replace("[Pinned Outcome]", f"'{st.session_state.desired_outcome}'")
 
         with col2:
@@ -115,7 +138,10 @@ else:
             border_color = "#2196F3" if "Developing" in stage else "#FF9800"
             if "Transitioning" in stage: border_color = "#F44336"
             
-            st.markdown(f'<div style="border: 2px solid {border_color}; padding:15px; border-radius:10px; background-color: #f0f2f6;"><strong>ASK:</strong><br><span style="font-size: 1.1em; font-weight: 500;">{final_q}</span></div>', unsafe_allow_html=True)
+            st.markdown(f'''<div class="ask-box" style="border: 2px solid {border_color};">
+                <strong style="color:{border_color};">ASK:</strong><br>
+                <span style="font-size: 1.1em; font-weight: 500;">{final_q}</span></div>''', unsafe_allow_html=True)
+            
             st.write("")
             client_response = st.text_area("Client Response:", height=150)
             log_col1, log_col2, log_col3 = st.columns([2, 1, 1])
@@ -156,7 +182,7 @@ else:
 
     with tab3:
         st.header("The Clean 12 Questions")
-        st.caption("Developed by Penny Tompkins & James Lawley")
+        
         c1, c2 = st.columns(2)
         with c1:
             st.subheader("Developing")
@@ -167,43 +193,14 @@ else:
         
         st.divider()
         st.header("The Comprehensive PRO Model")
-        st.write("Strategic classification used to determine the focus of facilitation.")
         
         p1, p2, p3 = st.columns(3)
         with p1:
             st.error("### P - Problem")
-            st.markdown("""
-            **Definition:** Unwanted states, descriptions of what's wrong, or "Away From" language.
-            
-            **Facilitator Goal:** Move the client's focus to a desired state.
-            
-            **The Strategic Question:**
-            - *"And when [Problem], what would you like to have happen?"*
-            """)
-            
+            st.markdown("**Definition:** Descriptions of what is wrong or unwanted.\n\n**Strategy:** Shift to Outcome.\n\n**Question:** *'And when [Problem], what would you like to have happen?'*")
         with p2:
             st.warning("### R - Remedy")
-            st.markdown("""
-            **Definition:** Conceptual solutions, "Towards" language without sensory detail, or "Fixes" (e.g., 'I need confidence').
-            
-            **Facilitator Goal:** Move time forward to discover the consequence of the remedy.
-            
-            **The Strategic Question:**
-            - *"And when [Remedy], then what happens?"*
-            """)
-            
+            st.markdown("**Definition:** Conceptual solutions ('I need to be calm').\n\n**Strategy:** Move time forward.\n\n**Question:** *'And when [Remedy], then what happens?'*")
         with p3:
             st.success("### O - Outcome")
-            st.markdown("""
-            **Definition:** The desired state. Sensory-rich descriptions of what the client wants.
-            
-            **Facilitator Goal:** Model the system. Develop the attributes and relationships.
-            
-            **The Strategic Action:**
-            - Apply the **Developing Questions** to build the symbolic landscape.
-            """)
-        
-        st.divider()
-        st.subheader("The Pivot: Concept to Metaphor")
-        st.write("If an Outcome is conceptual (e.g., 'I want clarity'), pivot to a metaphor to begin Symbolic Modeling:")
-        st.info("**'And [Clarity] is like what?'**")
+            st.markdown("**Definition:** The desired state/metaphor.\n\n**Strategy:** Model the system.\n\n**Action:** Use Developing & Relationship questions.")
