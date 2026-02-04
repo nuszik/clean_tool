@@ -19,7 +19,6 @@ st.markdown("""
         font-size: 10px !important;
         margin: 0 !important;
     }
-    /* Style for the Ask box to ensure readability */
     .ask-box {
         border-radius: 10px;
         padding: 15px;
@@ -36,21 +35,45 @@ if 'history' not in st.session_state:
 if 'desired_outcome' not in st.session_state:
     st.session_state.desired_outcome = ""
 
-# Define Global Questions
+# Define Expanded Global Questions (The Clean 20)
 QUESTIONS = {
-    "Developing (Outcomes)": ["And is there anything else about [X]?", "And what kind of [X] is that [X]?", "And whereabouts is [X]?", "And does [X] have a size or a shape?"],
-    "Relationship (Space)": ["And is there a relationship between [X] and [Y]?", "And when [X], what happens to [Y]?", "And whereabouts is [X] in relation to [Y]?"],
-    "Transitioning (Problems)": ["And when [X], what would you like to have happen?", "And what needs to happen for [Pinned Outcome]?"],
-    "Moving Time (Remedies/Intent)": ["And when [X], then what happens?", "And what happens just before [X]?", "And what does [X] want?", "And what is the intention of [X]?"]
+    "Developing (Sensory)": [
+        "And is there anything else about [X]?", 
+        "And what kind of [X] is that [X]?", 
+        "And does [X] have a size or a shape?",
+        "And what is the color of [X]?",
+        "And what is [X] made of?",
+        "And how heavy is [X]?",
+        "And that [X] is like what? (Metaphor)"
+    ],
+    "Spatial & Relationship": [
+        "And whereabouts is [X]?", 
+        "And is there a relationship between [X] and [Y]?", 
+        "And whereabouts is [X] in relation to [Y]?",
+        "And is [X] inside or outside?",
+        "And what is between [X] and [Y]?",
+        "And when [X], what happens to [Y]?"
+    ],
+    "Time & Sequence": [
+        "And what happens just before [X]?", 
+        "And then what happens? / What happens next?", 
+        "And how long does [X] last?",
+        "And where could that [X] come from? (Source)"
+    ],
+    "Intent & Capacity": [
+        "And what does [X] want?", 
+        "And what is the intention of [X]?",
+        "And what needs to happen for [X] to happen?",
+        "And can [X] happen?",
+        "And what happens to [X] when [Pinned Outcome]?"
+    ]
 }
 
-# Fix: Initialize selection states only if they don't exist
 if 'active_cat' not in st.session_state:
-    st.session_state.active_cat = "Developing (Outcomes)"
+    st.session_state.active_cat = "Developing (Sensory)"
 if 'active_q' not in st.session_state:
-    st.session_state.active_q = QUESTIONS["Developing (Outcomes)"][0]
+    st.session_state.active_q = QUESTIONS["Developing (Sensory)"][0]
 
-# Callback for Quick Buttons
 def set_question(q_text, category):
     st.session_state.active_q = q_text
     st.session_state.active_cat = category
@@ -60,20 +83,17 @@ with st.sidebar:
     st.title("🎯 Pinned Outcome")
     if st.session_state.desired_outcome:
         st.success(f"**{st.session_state.desired_outcome}**")
-        
-    st.divider()
     
+    st.divider()
     if st.session_state.history:
         st.header("📥 Session Control")
         transcript = f"CLEAN LANGUAGE SESSION - {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
         transcript += f"PINNED OUTCOME: {st.session_state.desired_outcome}\n"
         transcript += "="*40 + "\n\n"
         for i, item in enumerate(st.session_state.history):
-            m_tag = " [SYMBOL]" if item.get('is_metaphor') else ""
-            transcript += f"{i+1}. [{item['pro_type']}] {m_tag}\n   Q: {item['question']}\n   A: {item['answer']}\n\n"
+            transcript += f"{i+1}. [{item['pro_type']}] \n   Q: {item['question']}\n   A: {item['answer']}\n\n"
         
         st.download_button("Download Transcript (.txt)", transcript, f"session_{datetime.now().strftime('%Y%m%d')}.txt")
-        
         if st.button("↩️ Undo Last Entry"):
             if st.session_state.history:
                 st.session_state.history.pop()
@@ -97,11 +117,11 @@ elif len(st.session_state.history) == 0:
     st.write(f"Client said: **{st.session_state.desired_outcome}**")
     cat = st.radio("Type:", ["Outcome", "Problem", "Remedy"], horizontal=True)
     if st.button("Start Modeling"):
-        st.session_state.history.append({"question": "And what would you like to have happen?", "answer": st.session_state.desired_outcome, "pro_type": cat, "is_metaphor": False, "category": "Developing (Outcomes)"})
+        st.session_state.history.append({"question": "Opening", "answer": st.session_state.desired_outcome, "pro_type": cat, "is_metaphor": False, "category": "Developing (Sensory)"})
         st.rerun()
 
 else:
-    tab1, tab2, tab3 = st.tabs(["🚀 Active Session", "🖼️ Symbolic Landscape", "📚 Reference: Clean 12 & PRO"])
+    tab1, tab2, tab3 = st.tabs(["🚀 Active Session", "🖼️ Symbolic Landscape", "📚 Reference: Clean 20 & PRO"])
 
     with tab1:
         col1, col2 = st.columns([1, 1], gap="large")
@@ -112,30 +132,27 @@ else:
             
             st.write("**Quick Sensory:**")
             q_cols = st.columns(4)
-            q_cols[0].button("📍 Loc", on_click=set_question, args=("And whereabouts is [X]?", "Developing (Outcomes)"))
-            q_cols[1].button("📏 Size", on_click=set_question, args=("And does [X] have a size or a shape?", "Developing (Outcomes)"))
-            q_cols[2].button("🎨 Kind", on_click=set_question, args=("And what kind of [X] is that [X]?", "Developing (Outcomes)"))
-            q_cols[3].button("⏳ Time", on_click=set_question, args=("And what happens just before [X]?", "Moving Time (Remedies/Intent)"))
+            q_cols[0].button("📍 Loc", on_click=set_question, args=("And whereabouts is [X]?", "Spatial & Relationship"))
+            q_cols[1].button("📏 Size", on_click=set_question, args=("And does [X] have a size or a shape?", "Developing (Sensory)"))
+            q_cols[2].button("🎨 Kind", on_click=set_question, args=("And what kind of [X] is that [X]?", "Developing (Sensory)"))
+            q_cols[3].button("⏳ Time", on_click=set_question, args=("And what happens just before [X]?", "Time & Sequence"))
 
-            # Categories and Questions
             stage = st.selectbox("Category:", list(QUESTIONS.keys()), key="active_cat")
             options = QUESTIONS[stage]
             
-            # Validation: Ensure current active question exists in the chosen category's options
             if st.session_state.active_q not in options:
                 current_q_index = 0
             else:
                 current_q_index = options.index(st.session_state.active_q)
 
             selected_q = st.selectbox("Question:", options, index=current_q_index, key="q_selector")
-            # Update state if manually changed in dropdown
             st.session_state.active_q = selected_q
             
             final_q = selected_q.replace("[X]", f"'{subject_x}'").replace("[Y]", f"'{subject_y}'").replace("[Pinned Outcome]", f"'{st.session_state.desired_outcome}'")
 
         with col2:
             st.subheader("Log Response")
-            border_color = "#2196F3" if "Developing" in stage else "#FF9800"
+            border_color = "#2196F3" if "Sensory" in stage or "Spatial" in stage else "#FF9800"
             if "Transitioning" in stage: border_color = "#F44336"
             
             st.markdown(f'''<div class="ask-box" style="border: 2px solid {border_color};">
@@ -154,24 +171,12 @@ else:
                     st.rerun()
 
     with tab2:
-        st.subheader("📊 Session Balance Audit")
-        total_qs = len(st.session_state.history)
-        if total_qs > 1:
-            cats = [item.get('category', 'Developing (Outcomes)') for item in st.session_state.history]
-            dev_p = (cats.count("Developing (Outcomes)") / total_qs)
-            rel_p = (cats.count("Relationship (Space)") / total_qs)
-            c1, c2 = st.columns(2)
-            c1.metric("Developing %", f"{int(dev_p*100)}%")
-            c2.metric("Relationship %", f"{int(rel_p*100)}%")
-        
-        st.divider()
         st.subheader("🖼️ Symbolic Landscape")
         metaphors = [item for item in st.session_state.history if item.get('is_metaphor')]
         if metaphors:
             m_cols = st.columns(3)
             for i, item in enumerate(metaphors):
                 with m_cols[i % 3]: st.success(f"🔮 {item['answer'][:60]}...")
-        
         st.divider()
         st.subheader("Full Transcript")
         for item in reversed(st.session_state.history):
@@ -181,15 +186,38 @@ else:
             st.divider()
 
     with tab3:
-        st.header("The Clean 12 Questions")
+        st.header("The Clean 20 Questions")
+        
         
         c1, c2 = st.columns(2)
         with c1:
-            st.subheader("Developing")
-            st.markdown("- **Attributes:** And is there anything else about [X]?\n- **Attributes:** And what kind of [X] is that [X]?\n- **Location:** And whereabouts is [X]?\n- **Metaphor:** And that [X] is like what?\n- **Relationship:** And is there a relationship between [X] and [Y]?\n- **Relationship:** And whereabouts is [X] in relation to [Y]?")
+            st.subheader("Developing & Spatial")
+            st.markdown("""
+            - **Attributes:** And is there anything else about [X]?
+            - **Attributes:** And what kind of [X] is that [X]?
+            - **Size/Shape:** And does [X] have a size or a shape?
+            - **Location:** And whereabouts is [X]?
+            - **Metaphor:** And that [X] is like what?
+            - **Relationship:** And is there a relationship between [X] and [Y]?
+            - **Position:** And whereabouts is [X] in relation to [Y]?
+            - **Boundary:** And is [X] inside or outside?
+            - **Space:** And what is between [X] and [Y]?
+            - **Material:** And what is [X] made of?
+            """)
         with c2:
-            st.subheader("Moving Time/Space")
-            st.markdown("- **Sequence:** And what happens just before [X]?\n- **Sequence:** And then what happens?\n- **Source:** And where could that [X] come from?\n- **Intention:** And what does [X] want to have happen?\n- **Conditions:** And what needs to happen for [X]?\n- **Conditions:** And can [X] [Y]?")
+            st.subheader("Time, Intent & Capacity")
+            st.markdown("""
+            - **Sequence:** And what happens just before [X]?
+            - **Sequence:** And then what happens?
+            - **Source:** And where could that [X] come from?
+            - **Duration:** And how long does [X] last?
+            - **Intention:** And what does [X] want?
+            - **Intention:** And what is the intention of [X]?
+            - **Necessary Conditions:** And what needs to happen for [X]?
+            - **Possibility:** And can [X] happen?
+            - **Interaction:** And when [X], what happens to [Y]?
+            - **Outcome Link:** And what happens to [X] when [Pinned Outcome]?
+            """)
         
         st.divider()
         st.header("The Comprehensive PRO Model")
@@ -197,10 +225,10 @@ else:
         p1, p2, p3 = st.columns(3)
         with p1:
             st.error("### P - Problem")
-            st.markdown("**Definition:** Descriptions of what is wrong or unwanted.\n\n**Strategy:** Shift to Outcome.\n\n**Question:** *'And when [Problem], what would you like to have happen?'*")
+            st.markdown("**Focus:** Unwanted states.\n\n**Strategy:** Shift to Outcome.\n\n**Question:** *'And when [Problem], what would you like to have happen?'*")
         with p2:
             st.warning("### R - Remedy")
-            st.markdown("**Definition:** Conceptual solutions ('I need to be calm').\n\n**Strategy:** Move time forward.\n\n**Question:** *'And when [Remedy], then what happens?'*")
+            st.markdown("**Focus:** Conceptual fixes.\n\n**Strategy:** Move time forward.\n\n**Question:** *'And when [Remedy], then what happens?'*")
         with p3:
             st.success("### O - Outcome")
-            st.markdown("**Definition:** The desired state/metaphor.\n\n**Strategy:** Model the system.\n\n**Action:** Use Developing & Relationship questions.")
+            st.markdown("**Focus:** Desired states.\n\n**Strategy:** Model the system using the **Clean 20** questions above.")
