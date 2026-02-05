@@ -7,7 +7,6 @@ st.set_page_config(page_title="Clean Language Facilitator PRO", layout="wide")
 # --- CLEAN UI CSS ---
 st.markdown("""
     <style>
-    /* Force 10px font size for sensory buttons */
     button[kind="secondary"] div[data-testid="stMarkdownContainer"] p {
         font-size: 10px !important;
         font-weight: 700 !important;
@@ -156,9 +155,9 @@ else:
             
             st.markdown(f'''<div class="ask-box" style="border: 2px solid {border_color};">
                 <strong style="color:{border_color};">ASK:</strong><br>
-                <span style="font-size: 1.15em; font-weight: 500;">{final_q}</span></div>''', unsafe_allow_html=True)
+                <span style="font-size: 1.1em; font-weight: 500;">{final_q}</span></div>''', unsafe_allow_html=True)
             
-            client_response = st.text_area("Client Response:", height=200)
+            client_response = st.text_area("Client Response:", height=180)
 
             log_col1, log_col2, log_col3 = st.columns([2, 1, 1])
             with log_col1: pro_type = st.radio("PRO:", ["Outcome", "Problem", "Remedy"], horizontal=True)
@@ -197,16 +196,48 @@ else:
         with c2:
             st.subheader("Time, Intent & Capacity")
             st.markdown("- **Sequence:** And what happens just before [X]?\n- **Sequence:** And then what happens?\n- **Source:** And where could that [X] come from?\n- **Duration:** And how long does [X] last?\n- **Intention:** And what does [X] want?\n- **Intention:** And what is the intention of [X]?\n- **Necessary Conditions:** And what needs to happen for [X]?\n- **Possibility:** And can [X] happen?\n- **Interaction:** And when [X], what happens to [Y]?\n- **Outcome Link:** And what happens to [X] when [Pinned Outcome]?")
-        st.divider()
-        st.header("The Comprehensive PRO Model")
         
-        p1, p2, p3 = st.columns(3)
-        with p1:
+        st.divider()
+        st.header("Comprehensive PRO Strategy")
+        st.write("A strategic decision-making framework to move clients from problems to sensory outcomes.")
+        
+        
+        col_p, col_r, col_o = st.columns(3)
+        with col_p:
             st.error("### P - Problem")
-            st.markdown("**Strategy:** Shift to Outcome.\n**Question:** *'And when [Problem], what would you like to have happen?'*")
-        with p2:
+            st.markdown("""
+            **Identification:** 'Away from' language or unwanted states.
+            
+            **The Strategic Goal:** Pivot to the 'Towards' state immediately.
+            
+            **The Transition:**
+            - *'And when [Problem], what would you like to have happen?'*
+            
+            **Warning:** If they answer with another problem (The Problem Loop), ask the transition question again.
+            """)
+            
+        with col_r:
             st.warning("### R - Remedy")
-            st.markdown("**Strategy:** Move time forward.\n**Question:** *'And when [Remedy], then what happens?'*")
-        with p3:
+            st.markdown("""
+            **Identification:** Conceptual solutions ('I need to be calm') or 'Means to an end'.
+            
+            **The Strategic Goal:** Discover the consequence of the remedy.
+            
+            **The Transition:**
+            - *'And when [Remedy], then what happens?'*
+            
+            **Warning:** Avoid modeling a Remedy. Only model what happens *after* the remedy is achieved.
+            """)
+            
+        with col_o:
             st.success("### O - Outcome")
-            st.markdown("**Strategy:** Model the system using the **Clean 20** questions.")
+            st.markdown("""
+            **Identification:** Desired states or metaphors.
+            
+            **The Strategic Goal:** Model the system and build sensory detail.
+            
+            **The Transition:**
+            - Apply **Developing Questions** from the Clean 20.
+            
+            **The Pivot:** If the outcome is conceptual (e.g., 'Clarity'), ask: *'And [Clarity] is like what?'*
+            """)
