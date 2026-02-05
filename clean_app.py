@@ -4,9 +4,10 @@ from datetime import datetime
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Clean Language Facilitator PRO", layout="wide")
 
-# --- CLEAN UI CSS ---
+# --- FINAL VERIFIED UI CSS ---
 st.markdown("""
     <style>
+    /* Force 10px font size for sensory buttons */
     button[kind="secondary"] div[data-testid="stMarkdownContainer"] p {
         font-size: 10px !important;
         font-weight: 700 !important;
@@ -36,7 +37,7 @@ if 'history' not in st.session_state:
 if 'desired_outcome' not in st.session_state:
     st.session_state.desired_outcome = ""
 
-# The Complete Clean 20 Logic
+# The Complete Clean 20 Questions
 QUESTIONS = {
     "Developing (Sensory)": [
         "And is there anything else about [X]?", 
@@ -199,45 +200,41 @@ else:
         
         st.divider()
         st.header("Comprehensive PRO Strategy")
-        st.write("A strategic decision-making framework to move clients from problems to sensory outcomes.")
         
         
         col_p, col_r, col_o = st.columns(3)
         with col_p:
             st.error("### P - Problem")
             st.markdown("""
-            **Identification:** 'Away from' language or unwanted states.
+            **Focus:** Unwanted states.
             
-            **The Strategic Goal:** Pivot to the 'Towards' state immediately.
+            **Goal:** Pivot to Outcome.
             
-            **The Transition:**
-            - *'And when [Problem], what would you like to have happen?'*
+            **Strategy:** *'And when [Problem], what would you like to have happen?'*
             
-            **Warning:** If they answer with another problem (The Problem Loop), ask the transition question again.
+            **The Problem Loop:** If they answer with a new problem, do not model it. Repeat the pivot question.
             """)
             
         with col_r:
             st.warning("### R - Remedy")
             st.markdown("""
-            **Identification:** Conceptual solutions ('I need to be calm') or 'Means to an end'.
+            **Focus:** Conceptual fixes ('I need to be calm').
             
-            **The Strategic Goal:** Discover the consequence of the remedy.
+            **Goal:** Move time forward to the outcome.
             
-            **The Transition:**
-            - *'And when [Remedy], then what happens?'*
+            **Strategy:** *'And when [Remedy], then what happens?'*
             
-            **Warning:** Avoid modeling a Remedy. Only model what happens *after* the remedy is achieved.
+            **The Trap:** Do not develop the Remedy itself; it is only a means to an end.
             """)
             
         with col_o:
             st.success("### O - Outcome")
             st.markdown("""
-            **Identification:** Desired states or metaphors.
+            **Focus:** Desired states.
             
-            **The Strategic Goal:** Model the system and build sensory detail.
+            **Goal:** Model the sensory landscape.
             
-            **The Transition:**
-            - Apply **Developing Questions** from the Clean 20.
+            **Strategy:** Use the **Clean 20** questions.
             
-            **The Pivot:** If the outcome is conceptual (e.g., 'Clarity'), ask: *'And [Clarity] is like what?'*
+            **Threshold:** If the outcome is conceptual (e.g., 'Confidence'), pivot to metaphor: *'And [Confidence] is like what?'*
             """)
